@@ -1,24 +1,38 @@
 pipeline {
     agent any
 
+    tools {
+        // Must match the name in Manage Jenkins -> Tools
+        maven 'Maven 3'
+    }
+
     stages {
         stage('Checkout') {
             steps {
-                echo 'Pulling code from Private Repo...'
+                echo 'Pulling code from Public GitHub...'
                 checkout scm
             }
         }
+
         stage('Build') {
             steps {
-                echo 'Simulating Java Build...'
-                sh 'mkdir -p target'
-                sh 'echo "Fake build content" > target/my-app-1.0.jar'
+                echo 'Building Spring Boot JAR...'
+                // This creates the .jar file in the target/ folder
+                sh 'mvn clean package -DskipTests'
             }
         }
-        stage('Archive Artifacts') {
+
+        stage('Push to Nexus') {
             steps {
-                echo 'Saving the .jar file for the grade...'
-                archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+                echo 'Shipping JAR to Nexus Repository...'
+                // Use the ID you created in Jenkins Credentials
+                withCredentials([usernamePassword(credentialsId: 'nexus-credentials', passwordVariable: 'NEXUS_PASSWORD', usernameVariable: 'NEXUS_USERNAME')]) {
+                    sh """
+                        curl -v -u $NEXUS_USERNAME:$NEXUS_PASSWORD \
+                        --upload-file target/*.jar \
+                        http://nexus:8081/repository/maven-releases/my-app-1.0.jar
+                    """
+                }
             }
         }
     }
