@@ -30,7 +30,7 @@ pipeline {
                     sh """
                         curl -v -u $NEXUS_USERNAME:$NEXUS_PASSWORD \
                         --upload-file target/*.jar \
-                        http://nexus:8081/repository/maven-releases/my-app-1.0.jar
+                        http://192.168.1.67:8081/repository/maven-releases/my-app-1.0.jar
                     """
                 }
             }
